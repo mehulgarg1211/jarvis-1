@@ -1,84 +1,85 @@
-const btn = document.querySelector('.talk');
-const content = document.querySelector('.content');
+# Jarvis Assistant
 
-function speak(text) {
-    const text_speak = new SpeechSynthesisUtterance(text);
+import pyttsx3
+import datetime
+import speech_recognition as sr
+import webbrowser
+import os
+import random
 
-    text_speak.rate = 1;
-    text_speak.volume = 1;
-    text_speak.pitch = 1;
+# Initialize text-to-speech engine
+engine = pyttsx3.init()
 
-    window.speechSynthesis.speak(text_speak);
-}
+# Set voice rate (optional)
+engine.setProperty("rate", 150)
 
-function wishMe() {
-    var day = new Date();
-    var hour = day.getHours();
+# Function to speak text
+def speak(text):
+    engine.say(text)
+    engine.runAndWait()
 
-    if (hour >= 0 && hour < 12) {
-        speak("Good Morning Boss...");
-    } else if (hour >= 12 && hour < 17) {
-        speak("Good Afternoon Master...");
-    } else {
-        speak("Good Evening Sir...");
-    }
-}
+# Function to greet the user
+def greet():
+    hour = datetime.datetime.now().hour
+    if 0 <= hour < 12:
+        speak("Good morning!")
+    elif 12 <= hour < 18:
+        speak("Good afternoon!")
+    else:
+        speak("Good evening!")
 
-window.addEventListener('load', () => {
-    speak("Initializing JARVIS...");
-    wishMe();
-});
+# Function to take user's command
+def take_command():
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Listening...")
+        r.pause_threshold = 1
+        audio = r.listen(source)
 
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-const recognition = new SpeechRecognition();
+    try:
+        print("Recognizing...")
+        query = r.recognize_google(audio, language="en-in")
+        print(f"User said: {query}")
+    except Exception as e:
+        print("Sorry, I didn't catch that. Please say that again.")
+        return "None"
+    return query.lower()
 
-recognition.onresult = (event) => {
-    const currentIndex = event.resultIndex;
-    const transcript = event.results[currentIndex][0].transcript;
-    content.textContent = transcript;
-    takeCommand(transcript.toLowerCase());
-};
+# Function to execute Jarvis commands
+def run_jarvis():
+    greet()
+    while True:
+        query = take_command().lower()
 
-btn.addEventListener('click', () => {
-    content.textContent = "Listening...";
-    recognition.start();
-});
+        if "wikipedia" in query:
+            speak("Searching Wikipedia...")
+            query = query.replace("wikipedia", "")
+            results = wikipedia.summary(query, sentences=2)  # Requires 'wikipedia' module
+            speak("According to Wikipedia:")
+            speak(results)
 
-function takeCommand(message) {
-    if (message.includes('hey') || message.includes('hello')) {
-        speak("Hello Sir, How May I Help You?");
-    } else if (message.includes("open google")) {
-        window.open("https://google.com", "_blank");
-        speak("Opening Google...");
-    } else if (message.includes("open youtube")) {
-        window.open("https://youtube.com", "_blank");
-        speak("Opening Youtube...");
-    } else if (message.includes("open facebook")) {
-        window.open("https://facebook.com", "_blank");
-        speak("Opening Facebook...");
-    } else if (message.includes('what is') || message.includes('who is') || message.includes('what are')) {
-        window.open(`https://www.google.com/search?q=${message.replace(" ", "+")}`, "_blank");
-        const finalText = "This is what I found on the internet regarding " + message;
-        speak(finalText);
-    } else if (message.includes('wikipedia')) {
-        window.open(`https://en.wikipedia.org/wiki/${message.replace("wikipedia", "").trim()}`, "_blank");
-        const finalText = "This is what I found on Wikipedia regarding " + message;
-        speak(finalText);
-    } else if (message.includes('time')) {
-        const time = new Date().toLocaleString(undefined, { hour: "numeric", minute: "numeric" });
-        const finalText = "The current time is " + time;
-        speak(finalText);
-    } else if (message.includes('date')) {
-        const date = new Date().toLocaleString(undefined, { month: "short", day: "numeric" });
-        const finalText = "Today's date is " + date;
-        speak(finalText);
-    } else if (message.includes('calculator')) {
-        window.open('Calculator:///');
-        const finalText = "Opening Calculator";
-        speak(finalText);
-    } else {
-        window.open(`https://www.google.com/search?q=${message.replace(" ", "+")}`, "_blank");
-        const finalText = "I found some information for " + message + " on Google";
-        speak(finalText);
-    }
-}
+        elif "open youtube" in query:
+            webbrowser.open("https://www.youtube.com")
+
+        elif "open google" in query:
+            webbrowser.open("https://www.google.com")
+
+        elif "play music" in query:
+            music_dir = "path/to/your/music/folder"  # Specify your music folder path
+            songs = os.listdir(music_dir)
+            random.shuffle(songs)
+            os.startfile(os.path.join(music_dir, songs[0]))
+
+        elif "the time" in query:
+            current_time = datetime.datetime.now().strftime("%H:%M:%S")
+            speak(f"The current time is {current_time}")
+
+        elif "exit" in query:
+            speak("Goodbye!")
+            break
+
+        else:
+            speak("I'm sorry, I don't understand that command.")
+
+if __name__ == "__main__":
+    run_jarvis()
